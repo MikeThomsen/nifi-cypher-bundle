@@ -18,6 +18,8 @@
 package org.apache.nifi.graph;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.nifi.annotation.documentation.CapabilityDescription;
+import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.annotation.lifecycle.OnDisabled;
 import org.apache.nifi.annotation.lifecycle.OnEnabled;
 import org.apache.nifi.components.AllowableValue;
@@ -47,6 +49,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+@Tags({ "graph", "neo4j", "cypher" })
+@CapabilityDescription("Provides a client service for managing connections to a Neo4J database. Configuration information for " +
+        "the Neo4J driver that corresponds to most of the settings for this service can be found here: " +
+        "https://neo4j.com/docs/driver-manual/current/client-applications/#driver-configuration")
 public class Neo4JCypherClientService extends AbstractControllerService implements GraphClientService {
     public static final PropertyDescriptor CONNECTION_URL = new PropertyDescriptor.Builder()
             .name("neo4j-connection-url")

@@ -31,16 +31,35 @@ import java.util.List;
 
 public abstract class AbstractTinkerpopClientService extends AbstractControllerService {
     public static final PropertyDescriptor CONTACT_POINTS = new PropertyDescriptor.Builder()
-            .name("opencypher-contact-points")
+            .name("tinkerpop-contact-points")
             .displayName("Contact Points")
             .description("A comma-separated list of hostnames or IP addresses where an OpenCypher-enabled server can be found.")
             .required(true)
             .addValidator(StandardValidators.NON_EMPTY_EL_VALIDATOR)
             .expressionLanguageSupported(ExpressionLanguageScope.VARIABLE_REGISTRY)
             .build();
+    public static final PropertyDescriptor PORT = new PropertyDescriptor.Builder()
+            .name("tinkerpop-port")
+            .displayName("Port")
+            .description("The port where Gremlin Server is running on each host listed as a contact point.")
+            .required(true)
+            .defaultValue("8182")
+            .addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
+            .expressionLanguageSupported(ExpressionLanguageScope.VARIABLE_REGISTRY)
+            .build();
+    public static final PropertyDescriptor PATH = new PropertyDescriptor.Builder()
+            .name("tinkerpop-path")
+            .displayName("Path")
+            .description("The URL path where Gremlin Server is running on each host listed as a contact point.")
+            .required(true)
+            .defaultValue("/gremlin")
+            .addValidator(StandardValidators.NON_EMPTY_EL_VALIDATOR)
+            .expressionLanguageSupported(ExpressionLanguageScope.VARIABLE_REGISTRY)
+            .build();
 
     public static final PropertyDescriptor SSL_CONTEXT_SERVICE = new PropertyDescriptor.Builder()
-            .name("SSL Context Service")
+            .name("tinkerpop-ssl-context-service")
+            .displayName("SSL Context Service")
             .description("The SSL Context Service used to provide client certificate information for TLS/SSL "
                     + "connections.")
             .required(false)
@@ -48,7 +67,7 @@ public abstract class AbstractTinkerpopClientService extends AbstractControllerS
             .build();
 
     public static final List<PropertyDescriptor> DESCRIPTORS = Collections.unmodifiableList(Arrays.asList(
-            CONTACT_POINTS, SSL_CONTEXT_SERVICE
+            CONTACT_POINTS, PORT, PATH, SSL_CONTEXT_SERVICE
     ));
 
     @Override
@@ -72,12 +91,16 @@ public abstract class AbstractTinkerpopClientService extends AbstractControllerS
     }
 
     protected Cluster buildCluster(ConfigurationContext context) {
-        String contactProp = context.getProperty(CONTACT_POINTS).getValue();
+        String contactProp = context.getProperty(CONTACT_POINTS).evaluateAttributeExpressions().getValue();
+        int port = context.getProperty(PORT).evaluateAttributeExpressions().asInteger();
+        String path = context.getProperty(PATH).evaluateAttributeExpressions().getValue();
         String[] contactPoints = contactProp.split(",[\\s]*");
         Cluster.Builder builder = Cluster.build();
         for (String contactPoint : contactPoints) {
             builder.addContactPoint(contactPoint.trim());
         }
+
+        builder.port(port).path(path);
 
         builder = setupSSL(context, builder);
 
